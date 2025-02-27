@@ -35,6 +35,39 @@ volatile uint32_t ultimo_tempo_botao_reset = 0;
 
 ssd1306_t ssd;
 
+// Protótipos das funções
+void tocar_buzzer(int frequencia, int duracao);
+void atualizar_display();
+void botao_callback(uint gpio, uint32_t events);
+void configurar();
+
+int main() {
+    configurar();
+    printf("Sistema de Votação Iniciado!\nPressione os botões para votar.\n");
+
+    while (1) {
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+
+        // Verifica se o LED verde deve ser apagado
+        if (led_green_on && now >= led_green_time) {
+            gpio_put(LED_VERDE, 0);
+            led_green_on = false;
+        }
+        // Verifica se o LED vermelho deve ser apagado
+        if (led_red_on && now >= led_red_time) {
+            gpio_put(LED_VERMELHO, 0);
+            led_red_on = false;
+        }
+        // Verifica se o buzzer deve ser desligado
+        if (buzzer_on && now >= buzzer_time) {
+            pwm_set_enabled(pwm_gpio_to_slice_num(BUZZER), false);
+            buzzer_on = false;
+        }
+
+        sleep_ms(10); // Pequeno atraso para evitar processamento excessivo
+    }
+}
+
 // Função para ativar o buzzer com PWM
 void tocar_buzzer(int frequencia, int duracao) {
     uint slice_num = pwm_gpio_to_slice_num(BUZZER);
@@ -152,31 +185,4 @@ void configurar() {
     ssd1306_send_data(&ssd);
 
     atualizar_display();
-}
-
-int main() {
-    configurar();
-    printf("Sistema de Votação Iniciado!\nPressione os botões para votar.\n");
-
-    while (1) {
-        uint32_t now = to_ms_since_boot(get_absolute_time());
-
-        // Verifica se o LED verde deve ser apagado
-        if (led_green_on && now >= led_green_time) {
-            gpio_put(LED_VERDE, 0);
-            led_green_on = false;
-        }
-        // Verifica se o LED vermelho deve ser apagado
-        if (led_red_on && now >= led_red_time) {
-            gpio_put(LED_VERMELHO, 0);
-            led_red_on = false;
-        }
-        // Verifica se o buzzer deve ser desligado
-        if (buzzer_on && now >= buzzer_time) {
-            pwm_set_enabled(pwm_gpio_to_slice_num(BUZZER), false);
-            buzzer_on = false;
-        }
-
-        sleep_ms(10); // Pequeno atraso para evitar processamento excessivo
-    }
 }
